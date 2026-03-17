@@ -7,6 +7,9 @@ yarn.lock
 .env
 .env.local
 .env.production
+.env.development
+.env.test
+.env.example
 
 # Logs
 logs/
