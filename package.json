@@ -18,7 +18,12 @@
     "type": "git",
     "url": "git+https://github.com/vincent-akin/PCHR.git"
   },
-  "keywords": ["healthcare", "emr", "ehr", "medical-records"],
+  "keywords": [
+    "healthcare",
+    "emr",
+    "ehr",
+    "medical-records"
+  ],
   "author": "vincent-akin",
   "license": "ISC",
   "bugs": {
@@ -37,6 +42,7 @@
     "morgan": "^1.10.1"
   },
   "devDependencies": {
+    "@ljharb/tsconfig": "^0.3.2",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
