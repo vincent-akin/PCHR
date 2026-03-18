@@ -151,7 +151,7 @@ const transferSchema = createBaseSchema(transferSchemaFields, {
 });
 
 // Generate transfer code before saving
-transferSchema.pre('save', async function(next) {
+transferSchema.pre('save', async function() {
     if (!this.transferCode) {
         // Generate unique transfer code: TR-YYYYMMDD-XXXX
         const date = new Date();
@@ -167,7 +167,6 @@ transferSchema.pre('save', async function(next) {
         this.expiresAt = expiryDate;
     }
     
-    next();
 });
 
 // Method to check if transfer is expired

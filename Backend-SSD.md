@@ -82,47 +82,54 @@ Cloud Object Storage
 # 3. Backend Project Structure
 
 ```
-src/
+pchr-backend/
 │
-├── controllers
-│   ├── auth.controller.js
-│   ├── patient.controller.js
-│   ├── record.controller.js
-│   └── transfer.controller.js
+├── src/                          # Source code
+│   ├── controllers/              # Route handlers
+│   ├── services/                 # Business logic
+│   ├── repositories/             # Database access
+│   ├── models/                   # Mongoose schemas
+│   │   ├── User.js
+│   │   ├── Patient.js
+│   │   ├── MedicalRecord.js
+│   │   ├── Transfer.js
+│   │   ├── AuditLog.js
+│   │   ├── File.js
+│   │   ├── Tenant.js
+│   │   └── index.js
+│   ├── middlewares/              # Express middlewares
+│   ├── validators/               # Request validation
+│   ├── routes/                   # API routes
+│   ├── events/                   # Event handlers
+│   ├── config/                   # Configuration
+│   │   ├── config.js
+│   │   └── database.js
+│   ├── utils/                    # Utilities
+│   │   ├── httpStatus.js
+│   │   ├── ApiError.js
+│   │   ├── apiResponse.js
+│   │   └── asyncHandler.js
+│   ├── app.js                    # Express app
+│   └── server.js                 # Server entry point
 │
-├── services
-│   ├── auth.service.js
-│   ├── patient.service.js
-│   ├── record.service.js
-│   └── transfer.service.js
+├── scripts/                       # Utility scripts (AT ROOT LEVEL)
+│   └── test-models.js            # Test script for models
 │
-├── repositories
-│   ├── patient.repository.js
-│   ├── record.repository.js
-│   └── user.repository.js
+├── tests/                          # Test files
+│   ├── unit/                      # Unit tests
+│   └── integration/                # Integration tests
 │
-├── models
-│   ├── User.js
-│   ├── Patient.js
-│   ├── Record.js
-│   ├── Transfer.js
-│   └── AuditLog.js
+├── node_modules/                   # Dependencies
 │
-├── middlewares
-│   ├── auth.middleware.js
-│   ├── role.middleware.js
-│   ├── tenant.middleware.js
-│   └── error.middleware.js
-│
-├── validators
-│
-├── routes
-│
-├── events
-│
-├── config
-│
-└── utils
+├── .env                            # Environment variables (NOT committed)
+├── .env.example                    # Environment variables template
+├── .gitignore                      # Git ignore file
+├── .eslintrc.json                  # ESLint configuration
+├── .prettierrc                     # Prettier configuration
+├── nodemon.json                     # Nodemon configuration
+├── package.json                     # Project dependencies and scripts
+├── package-lock.json                # Locked dependencies
+└── README.md                        # Project documentation
 ```
 
 ---
