@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 
+import v1Routes from './routes/v1/index.js';
 import httpStatus from './utils/httpStatus.js';
 import testRoutes from './routes/test.routes.js';
 
@@ -18,6 +19,9 @@ app.use(cors()); // Enable CORS
 app.use(morgan('combined')); // Logging
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+
+// API v1 routes
+app.use('/api/v1', v1Routes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

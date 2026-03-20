@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import config from '../config/config.js';
-import { ApiError, httpStatus } from '../utils/ApiError.js'
+import ApiError from '../utils/ApiError.js'
 
 
 /**

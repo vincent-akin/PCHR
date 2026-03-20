@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
 import { ApiError } from '../utils/index.js';
-import config from '../config/config.js';
 import User from '../models/User.js';
 import * as authService from '../services/auth.service.js';
 
