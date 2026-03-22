@@ -2,12 +2,14 @@ import express from 'express';
 import authRoutes from './auth.routes.js';
 import tenantRoutes from './tenant.routes.js';
 import patientRoutes from './patient.routes.js'
+import recordRoutes from './record.routes.js';
 
 const router = express.Router();
 
 router.use('/auth', authRoutes);
 router.use('/tenants', tenantRoutes);
 router.use('/patients', patientRoutes);
+router.use('/records', recordRoutes);
 
 // Health check for v1
 router.get('/health', (req, res) => {
