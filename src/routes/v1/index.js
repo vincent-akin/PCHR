@@ -6,6 +6,7 @@ import recordRoutes from './record.routes.js';
 import fileRoutes from './file.routes.js';
 import transferRoutes from './transfer.routes.js'
 import dashboardRoutes from './dashboard.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ router.use('/records', recordRoutes);
 router.use('/files', fileRoutes);
 router.use('/transfers', transferRoutes);
 router.use('/dashboard', dashboardRoutes)
+router.use('/notifications', notificationRoutes)
 
 // Health check for v1
 router.get('/health', (req, res) => {
