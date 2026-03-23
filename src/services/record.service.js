@@ -1,13 +1,15 @@
 import MedicalRecord from '../models/MedicalRecord.js';
 import Patient from '../models/Patient.js';
+import User from '../models/User.js';
 import { ApiError } from '../utils/index.js';
 import { updateTenantUsage } from '../middlewares/tenant.middleware.js';
+import { createNotification, createBulkNotifications } from './notification.service.js';
 
 /**
  * Create a new medical record
  */
 export const createRecord = async (recordData, userId, tenantId) => {
-    // Verify patient exists and belongs to tenant
+  // Verify patient exists and belongs to tenant
     const patient = await Patient.findOne({ 
         _id: recordData.patientId, 
         tenantId: tenantId,
@@ -18,16 +20,62 @@ export const createRecord = async (recordData, userId, tenantId) => {
         throw ApiError.notFound('Patient not found');
     }
     
+    // Get doctor info
+    const doctor = await User.findById(userId);
+    
     // Create record
     const record = await MedicalRecord.create({
         ...recordData,
         tenantId: tenantId,
         createdBy: userId,
-        doctorId: userId // Current user is the doctor
+        doctorId: userId
     });
     
     // Update tenant usage
     await updateTenantUsage(tenantId, { records: 1 });
+    
+    // 🔔 NOTIFICATION: Notify other doctors in the same tenant about new record
+    const otherDoctors = await User.find({
+        tenantId: tenantId,
+        role: 'doctor',
+        isActive: true,
+        _id: { $ne: userId }
+    });
+    
+    if (otherDoctors.length > 0) {
+        await createBulkNotifications(otherDoctors, {
+        type: 'record_created',
+        title: 'New Medical Record',
+        message: `${doctor.name} created a new ${record.type} record for patient ${patient.fullName}: "${record.title}"`,
+        data: {
+            recordId: record._id,
+            recordTitle: record.title,
+            recordType: record.type,
+            patientId: patient._id,
+            patientName: patient.fullName,
+            doctorId: doctor._id,
+            doctorName: doctor.name,
+            createdAt: record.createdAt
+        },
+        createdBy: userId
+        });
+    }
+    
+    // 🔔 NOTIFICATION: Confirm to creator
+    await createNotification({
+        userId: userId,
+        type: 'record_created',
+        title: 'Record Created Successfully',
+        message: `You created a new ${record.type} record for patient ${patient.fullName}: "${record.title}"`,
+        data: {
+            recordId: record._id,
+            recordTitle: record.title,
+            patientId: patient._id,
+            patientName: patient.fullName
+        },
+        tenantId: tenantId,
+        createdBy: userId
+    });
     
     return record;
 };
@@ -41,8 +89,8 @@ export const getRecordById = async (recordId, tenantId) => {
         tenantId: tenantId,
         isDeleted: false 
     })
-    .populate('patientId', 'firstName lastName hospitalId')
-    .populate('doctorId', 'name email specialization');
+        .populate('patientId', 'firstName lastName hospitalId')
+        .populate('doctorId', 'name email specialization');
     
     if (!record) {
         throw ApiError.notFound('Medical record not found');
@@ -109,44 +157,73 @@ export const getPatientRecords = async (patientId, tenantId, filters = {}, page 
     
     return {
         patient: {
-            id: patient._id,
-            name: patient.fullName,
-            hospitalId: patient.hospitalId
+        id: patient._id,
+        name: patient.fullName,
+        hospitalId: patient.hospitalId
         },
         records,
         pagination: {
-            page,
-            limit,
-            total,
-            pages: Math.ceil(total / limit),
-            hasNext: page * limit < total,
-            hasPrev: page > 1
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1
         }
     };
-};
+    };
 
-/**
- * Update medical record
- */
-export const updateRecord = async (recordId, updateData, tenantId, userId) => {
+    /**
+     * Update medical record
+     */
+    export const updateRecord = async (recordId, updateData, tenantId, userId, userRole) => {
     // Check if record exists
-    const record = await getRecordById(recordId, tenantId);
+    const record = await MedicalRecord.findById(recordId)
+        .populate('patientId', 'fullName')
+        .populate('doctorId', 'name');
+    
+    if (!record) {
+        throw ApiError.notFound('Medical record not found');
+    }
     
     // Only the creating doctor or admin can update
-    if (record.doctorId._id.toString() !== userId && req.user.role !== 'admin') {
+    if (record.doctorId._id.toString() !== userId && userRole !== 'admin') {
         throw ApiError.forbidden('Only the attending doctor or admin can update this record');
     }
+    
+    // Get updater info
+    const updater = await User.findById(userId);
     
     // Update record
     const updatedRecord = await MedicalRecord.findByIdAndUpdate(
         recordId,
         {
-            ...updateData,
-            updatedBy: userId,
-            status: 'amended' // Mark as amended when updated
+        ...updateData,
+        updatedBy: userId,
+        status: 'amended'
         },
         { new: true, runValidators: true }
     );
+    
+    // 🔔 NOTIFICATION: Notify the original doctor if someone else updated
+    if (record.doctorId._id.toString() !== userId) {
+        await createNotification({
+        userId: record.doctorId._id,
+        type: 'record_updated',
+        title: 'Record Updated',
+        message: `${updater.name} updated the record "${record.title}" for patient ${record.patientId.fullName}`,
+        data: {
+            recordId: record._id,
+            recordTitle: record.title,
+            patientId: record.patientId._id,
+            patientName: record.patientId.fullName,
+            updatedBy: updater.name,
+            updatedAt: new Date()
+        },
+        tenantId: tenantId,
+        createdBy: userId
+        });
+    }
     
     return updatedRecord;
 };
@@ -155,27 +232,48 @@ export const updateRecord = async (recordId, updateData, tenantId, userId) => {
  * Delete medical record (soft delete - admin only)
  */
 export const deleteRecord = async (recordId, tenantId, userId) => {
-  // Check if record exists
-    await getRecordById(recordId, tenantId);
+    // Check if record exists
+    const record = await MedicalRecord.findById(recordId)
+        .populate('patientId', 'fullName');
+    
+    if (!record) {
+        throw ApiError.notFound('Medical record not found');
+    }
     
     // Soft delete
-    const record = await MedicalRecord.findByIdAndUpdate(
+    const deletedRecord = await MedicalRecord.findByIdAndUpdate(
         recordId,
         {
-        isDeleted: true,
-        updatedBy: userId
+            isDeleted: true,
+            updatedBy: userId
         },
         { new: true }
     );
     
-    return record;
+    // 🔔 NOTIFICATION: Notify the doctor who created it
+    await createNotification({
+        userId: record.doctorId,
+        type: 'record_deleted',
+        title: 'Record Deleted',
+        message: `Medical record "${record.title}" for patient ${record.patientId.fullName} has been deleted`,
+        data: {
+            recordId: record._id,
+            recordTitle: record.title,
+            patientId: record.patientId._id,
+            patientName: record.patientId.fullName
+        },
+        tenantId: tenantId,
+        createdBy: userId
+    });
+    
+    return deletedRecord;
 };
 
 /**
  * Get records by type
  */
 export const getRecordsByType = async (tenantId, recordType, page = 1, limit = 10) => {
-  const skip = (page - 1) * limit;
+    const skip = (page - 1) * limit;
     
     const query = { 
         tenantId: tenantId,
@@ -231,13 +329,13 @@ export const getRecordStats = async (tenantId, patientId = null) => {
     const monthlyTrend = await MedicalRecord.aggregate([
         { $match: matchStage },
         {
-        $group: {
-            _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
-            },
-            count: { $sum: 1 }
-        }
+            $group: {
+                _id: {
+                year: { $year: '$createdAt' },
+                month: { $month: '$createdAt' }
+                },
+                count: { $sum: 1 }
+            }
         },
         { $sort: { '_id.year': 1, '_id.month': 1 } },
         { $limit: 12 }
@@ -247,40 +345,40 @@ export const getRecordStats = async (tenantId, patientId = null) => {
     const topDoctors = await MedicalRecord.aggregate([
         { $match: matchStage },
         {
-        $group: {
-            _id: '$doctorId',
-            recordCount: { $sum: 1 }
-        }
+            $group: {
+                _id: '$doctorId',
+                recordCount: { $sum: 1 }
+            }
         },
         { $sort: { recordCount: -1 } },
         { $limit: 5 },
         {
-        $lookup: {
-            from: 'users',
-            localField: '_id',
-            foreignField: '_id',
-            as: 'doctor'
-        }
+            $lookup: {
+                from: 'users',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'doctor'
+            }
         },
         { $unwind: '$doctor' },
         {
-        $project: {
-            doctorId: '$_id',
-            doctorName: '$doctor.name',
-            doctorEmail: '$doctor.email',
-            recordCount: 1
-        }
+            $project: {
+                doctorId: '$_id',
+                doctorName: '$doctor.name',
+                doctorEmail: '$doctor.email',
+                recordCount: 1
+            }
         }
     ]);
     
     return {
         byType: stats.reduce((acc, curr) => {
-        acc[curr._id] = curr.count;
-        return acc;
+            acc[curr._id] = curr.count;
+            return acc;
         }, {}),
         monthlyTrend: monthlyTrend.map(item => ({
-        month: `${item._id.year}-${item._id.month}`,
-        count: item.count
+            month: `${item._id.year}-${item._id.month}`,
+            count: item.count
         })),
         topDoctors,
         total: await MedicalRecord.countDocuments(matchStage)
