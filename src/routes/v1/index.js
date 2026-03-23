@@ -5,6 +5,7 @@ import patientRoutes from './patient.routes.js'
 import recordRoutes from './record.routes.js';
 import fileRoutes from './file.routes.js';
 import transferRoutes from './transfer.routes.js'
+import dashboardRoutes from './dashboard.routes.js';
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.use('/patients', patientRoutes);
 router.use('/records', recordRoutes);
 router.use('/files', fileRoutes);
 router.use('/transfers', transferRoutes);
+router.use('/dashboard', dashboardRoutes)
 
 // Health check for v1
 router.get('/health', (req, res) => {
