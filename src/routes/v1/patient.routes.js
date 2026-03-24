@@ -19,9 +19,76 @@ router.use(setTenantContext);
 router.use(validateTenant);
 
 /**
- * @route POST /api/v1/patients
- * @desc Create a new patient
- * @access Private (Doctor, Nurse, Admin)
+ * @swagger
+ * tags:
+ *   name: Patients
+ *   description: Patient management endpoints
+ */
+
+/**
+ * @swagger
+ * /patients:
+ *   post:
+ *     summary: Create a new patient
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - dateOfBirth
+ *               - gender
+ *               - phone
+ *               - hospitalId
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 example: John
+ *               lastName:
+ *                 type: string
+ *                 example: Doe
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *                 example: 1990-01-15
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female, other, prefer_not_to_say]
+ *                 example: male
+ *               phone:
+ *                 type: string
+ *                 example: +2347012345678
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: john.doe@email.com
+ *               bloodGroup:
+ *                 type: string
+ *                 enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]
+ *                 example: O+
+ *               hospitalId:
+ *                 type: string
+ *                 example: HOSP001
+ *               allergies:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["Penicillin", "Peanuts"]
+ *     responses:
+ *       201:
+ *         description: Patient created successfully
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Doctor/Nurse only
+ *       409:
+ *         description: Patient with this hospital ID already exists
  */
 router.post(
     '/', 
@@ -31,9 +98,53 @@ router.post(
 );
 
 /**
- * @route GET /api/v1/patients
- * @desc List patients with pagination and filters
- * @access Private (All authenticated users)
+ * @swagger
+ * /patients:
+ *   get:
+ *     summary: List patients with pagination and filters
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Items per page
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search by name, phone, or hospital ID
+ *       - in: query
+ *         name: bloodGroup
+ *         schema:
+ *           type: string
+ *           enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]
+ *         description: Filter by blood group
+ *       - in: query
+ *         name: gender
+ *         schema:
+ *           type: string
+ *           enum: [male, female, other]
+ *         description: Filter by gender
+ *       - in: query
+ *         name: isActive
+ *         schema:
+ *           type: boolean
+ *         description: Filter by active status
+ *     responses:
+ *       200:
+ *         description: Patients retrieved successfully
+ *       401:
+ *         description: Unauthorized
  */
 router.get(
     '/', 
@@ -42,9 +153,36 @@ router.get(
 );
 
 /**
- * @route GET /api/v1/patients/stats
- * @desc Get patient statistics
- * @access Private (Doctor, Nurse, Admin)
+ * @swagger
+ * /patients/stats:
+ *   get:
+ *     summary: Get patient statistics
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Patient statistics retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     active:
+ *                       type: integer
+ *                     male:
+ *                       type: integer
+ *                     female:
+ *                       type: integer
+ *                     bloodGroups:
+ *                       type: object
  */
 router.get(
     '/stats', 
@@ -53,19 +191,27 @@ router.get(
 );
 
 /**
- * @route GET /api/v1/patients/hospital/:hospitalId
- * @desc Get patient by hospital ID
- * @access Private (All authenticated users)
- */
-router.get(
-    '/hospital/:hospitalId', 
-    patientController.getPatientByHospitalId
-);
-
-/**
- * @route GET /api/v1/patients/:id
- * @desc Get patient by ID
- * @access Private (All authenticated users)
+ * @swagger
+ * /patients/{id}:
+ *   get:
+ *     summary: Get patient by ID
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient retrieved successfully
+ *       404:
+ *         description: Patient not found
+ *       401:
+ *         description: Unauthorized
  */
 router.get(
     '/:id', 
@@ -74,9 +220,43 @@ router.get(
 );
 
 /**
- * @route PUT /api/v1/patients/:id
- * @desc Update patient
- * @access Private (Doctor, Nurse, Admin)
+ * @swagger
+ * /patients/{id}:
+ *   put:
+ *     summary: Update patient
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               isActive:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Patient updated successfully
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Patient not found
  */
 router.put(
     '/:id', 
@@ -87,9 +267,27 @@ router.put(
 );
 
 /**
- * @route DELETE /api/v1/patients/:id
- * @desc Delete patient (soft delete)
- * @access Private (Admin only)
+ * @swagger
+ * /patients/{id}:
+ *   delete:
+ *     summary: Delete patient (soft delete)
+ *     tags: [Patients]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Patient ID
+ *     responses:
+ *       200:
+ *         description: Patient deleted successfully
+ *       403:
+ *         description: Forbidden - Admin only
+ *       404:
+ *         description: Patient not found
  */
 router.delete(
     '/:id', 

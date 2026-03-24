@@ -1,0 +1,893 @@
+{
+  "info": {
+    "name": "PCHR Platform API",
+    "description": "Patient Clinical Health Record Platform - Secure Healthcare API\n\n## Features:\n- 🔐 JWT Authentication\n- 🏥 Multi-tenant Hospital Management\n- 👨‍⚕️ Patient Records Management\n- 📋 Medical Documentation\n- 📁 File Upload (X-rays, Reports)\n- 🔄 Inter-hospital Record Transfers\n- 📊 Dashboard Analytics\n- 🔔 Notification System\n- 📎 Data Export (Excel, PDF, CSV)\n\n## Authentication:\n1. Use the `Auth > Login` endpoint to get an access token\n2. Click the \"Authorization\" tab and select \"Bearer Token\"\n3. Paste your token to authenticate all requests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints for user management",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. John Smith\",\n  \"email\": \"doctor@hospital.com\",\n  \"password\": \"Test123!\",\n  \"role\": \"doctor\",\n  \"specialization\": \"Cardiology\",\n  \"licenseNumber\": \"MED12345\",\n  \"phoneNumber\": \"+2347012345678\",\n  \"tenantId\": \"YOUR_TENANT_ID\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new user. For first user, tenantId is optional (auto-created). For subsequent users, tenantId is required."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mainhospital.com\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login to get access token. Copy the accessToken from response and use in Authorization header."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current logged-in user profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"OldPass123!\",\n  \"newPassword\": \"NewPass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "change-password"]
+            },
+            "description": "Change user password"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout user and invalidate token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tenants",
+      "description": "Multi-tenant management endpoints",
+      "item": [
+        {
+          "name": "Get Current Tenant",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/me",
+              "host": ["{{base_url}}"],
+              "path": ["tenants", "me"]
+            },
+            "description": "Get current tenant information"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tenant Usage",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/me/usage",
+              "host": ["{{base_url}}"],
+              "path": ["tenants", "me", "usage"]
+            },
+            "description": "Get tenant usage statistics (storage, users, patients)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "description": "Patient management CRUD operations",
+      "item": [
+        {
+          "name": "Create Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"gender\": \"male\",\n  \"phone\": \"+2347012345678\",\n  \"email\": \"john.doe@email.com\",\n  \"address\": {\n    \"street\": \"123 Main Street\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"country\": \"Nigeria\"\n  },\n  \"bloodGroup\": \"O+\",\n  \"allergies\": [\"Penicillin\", \"Peanuts\"],\n  \"hospitalId\": \"HOSP001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/patients",
+              "host": ["{{base_url}}"],
+              "path": ["patients"]
+            },
+            "description": "Create a new patient record"
+          },
+          "response": []
+        },
+        {
+          "name": "List Patients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patients?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["patients"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by name, phone, or hospital ID",
+                  "disabled": true
+                },
+                {
+                  "key": "bloodGroup",
+                  "value": "",
+                  "description": "Filter by blood group (A+, A-, B+, B-, O+, O-, AB+, AB-)",
+                  "disabled": true
+                },
+                {
+                  "key": "gender",
+                  "value": "",
+                  "description": "Filter by gender (male, female, other)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "List patients with pagination and filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patients/{{patientId}}",
+              "host": ["{{base_url}}"],
+              "path": ["patients", "{{patientId}}"]
+            },
+            "description": "Get patient details by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Patient",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+2347098765432\",\n  \"email\": \"john.updated@email.com\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/patients/{{patientId}}",
+              "host": ["{{base_url}}"],
+              "path": ["patients", "{{patientId}}"]
+            },
+            "description": "Update patient information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Patient",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patients/{{patientId}}",
+              "host": ["{{base_url}}"],
+              "path": ["patients", "{{patientId}}"]
+            },
+            "description": "Soft delete patient (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patients/stats",
+              "host": ["{{base_url}}"],
+              "path": ["patients", "stats"]
+            },
+            "description": "Get patient demographic statistics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Medical Records",
+      "description": "Medical records management",
+      "item": [
+        {
+          "name": "Create Medical Record",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"type\": \"consultation\",\n  \"title\": \"Initial Cardiology Consultation\",\n  \"notes\": \"Patient reports chest pain when exercising. BP elevated.\",\n  \"vitalSigns\": {\n    \"bloodPressure\": {\n      \"systolic\": 135,\n      \"diastolic\": 85\n    },\n    \"heartRate\": 78,\n    \"temperature\": 36.8,\n    \"weight\": 75.5,\n    \"height\": 175\n  },\n  \"diagnosis\": [\n    {\n      \"code\": \"I10\",\n      \"description\": \"Essential hypertension\",\n      \"isPrimary\": true\n    }\n  ],\n  \"medications\": [\n    {\n      \"name\": \"Lisinopril\",\n      \"dosage\": \"10mg\",\n      \"frequency\": \"Once daily\",\n      \"instructions\": \"Take in the morning with food\"\n    }\n  ],\n  \"followUpRequired\": true,\n  \"followUpDate\": \"2026-04-15\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/records",
+              "host": ["{{base_url}}"],
+              "path": ["records"]
+            },
+            "description": "Create a new medical record"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/records/patient/{{patientId}}?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["records", "patient", "{{patientId}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by record type",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all medical records for a patient"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Record Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/records/stats",
+              "host": ["{{base_url}}"],
+              "path": ["records", "stats"]
+            },
+            "description": "Get record statistics (by type, monthly trends, top doctors)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Transfers",
+      "description": "Inter-hospital record transfers",
+      "item": [
+        {
+          "name": "Create Transfer Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"toTenant\": \"{{destinationTenantId}}\",\n  \"type\": \"full_record\",\n  \"requestNotes\": \"Request for second opinion\",\n  \"patientConsent\": {\n    \"obtained\": true,\n    \"consentMethod\": \"digital\"\n  },\n  \"purpose\": \"second_opinion\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transfers",
+              "host": ["{{base_url}}"],
+              "path": ["transfers"]
+            },
+            "description": "Request to transfer patient records to another institution"
+          },
+          "response": []
+        },
+        {
+          "name": "List Transfers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transfers?status=pending",
+              "host": ["{{base_url}}"],
+              "path": ["transfers"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "Filter by status (pending, approved, rejected, completed)"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "List transfers with filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Approved for specialist review\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/transfers/{{transferId}}/approve",
+              "host": ["{{base_url}}"],
+              "path": ["transfers", "{{transferId}}", "approve"]
+            },
+            "description": "Approve a pending transfer request (destination tenant only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transfers/{{transferId}}/complete",
+              "host": ["{{base_url}}"],
+              "path": ["transfers", "{{transferId}}", "complete"]
+            },
+            "description": "Complete transfer and send records (source tenant only)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Transfer Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transfers/stats",
+              "host": ["{{base_url}}"],
+              "path": ["transfers", "stats"]
+            },
+            "description": "Get transfer statistics (pending, completed, avg processing time)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Export",
+      "description": "Data export endpoints",
+      "item": [
+        {
+          "name": "Export Patients to Excel",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/export/patients/excel",
+              "host": ["{{base_url}}"],
+              "path": ["export", "patients", "excel"]
+            },
+            "description": "Export patients to Excel file with optional filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Patients to CSV",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/export/patients/csv",
+              "host": ["{{base_url}}"],
+              "path": ["export", "patients", "csv"]
+            },
+            "description": "Export patients to CSV file"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Records to PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/export/records/pdf?patientId={{patientId}}",
+              "host": ["{{base_url}}"],
+              "path": ["export", "records", "pdf"],
+              "query": [
+                {
+                  "key": "patientId",
+                  "value": "{{patientId}}",
+                  "description": "Filter by patient ID (optional)"
+                },
+                {
+                  "key": "type",
+                  "value": "",
+                  "description": "Filter by record type",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Export medical records to PDF report"
+          },
+          "response": []
+        },
+        {
+          "name": "Export Transfers to Excel",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/export/transfers/excel?status=completed",
+              "host": ["{{base_url}}"],
+              "path": ["export", "transfers", "excel"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed",
+                  "description": "Filter by transfer status"
+                }
+              ]
+            },
+            "description": "Export transfers to Excel file"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "description": "Analytics and statistics",
+      "item": [
+        {
+          "name": "Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/stats",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "stats"]
+            },
+            "description": "Get main dashboard statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Recent Activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/activity?limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "activity"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get recent system activity"
+          },
+          "response": []
+        },
+        {
+          "name": "Monthly Trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/trends?months=6",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "trends"],
+              "query": [
+                {
+                  "key": "months",
+                  "value": "6"
+                }
+              ]
+            },
+            "description": "Get monthly trends for charts"
+          },
+          "response": []
+        },
+        {
+          "name": "System Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/dashboard/alerts",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", "alerts"]
+            },
+            "description": "Get system alerts and warnings"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "description": "User notification management",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "unreadOnly",
+                  "value": "",
+                  "description": "Get only unread notifications",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get user notifications"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/{{notificationId}}/read",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "{{notificationId}}", "read"]
+            },
+            "description": "Mark a specific notification as read"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/notifications/read-all",
+              "host": ["{{base_url}}"],
+              "path": ["notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "patientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transferId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "destinationTenantId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

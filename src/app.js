@@ -1,13 +1,15 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import cookieParser from 'cookie-parser';
 
 import v1Routes from './routes/v1/index.js';
-import httpStatus from './utils/httpStatus.js';
 import testRoutes from './routes/test.routes.js';
+import httpStatus from './utils/httpStatus.js';
+import { swaggerSpec } from './config/swagger.js';
 
 dotenv.config();
 
@@ -19,9 +21,26 @@ app.use(cors()); // Enable CORS
 app.use(morgan('combined')); // Logging
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(cookieParser()); // Parse cookies
 
-// API v1 routes
-app.use('/api/v1', v1Routes);
+// Swagger Documentation
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: 'PCHR Platform API Documentation',
+    swaggerOptions: {
+        persistAuthorization: true,
+        docExpansion: 'none',
+        filter: true,
+        tryItOutEnabled: true
+    }
+}));
+
+// Serve swagger.json
+app.get('/api/docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerSpec);
+});
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -29,15 +48,16 @@ app.get('/health', (req, res) => {
         status: 'OK', 
         timestamp: new Date().toISOString(),
         service: 'PCHR Backend',
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        docs: '/api/docs'
     });
 });
 
+// API v1 routes
+app.use('/api/v1', v1Routes);
+
 // Test routes (remove in production)
 app.use('/api/v1/test', testRoutes);
-
-// API routes will be added here
-// app.use('/api/v1', routes);
 
 // 404 handler
 app.use((req, res) => {
