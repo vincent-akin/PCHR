@@ -23,7 +23,7 @@ Base URL: http://localhost:8000/api/v1
 Authentication: Bearer Token
 ```
 
-### **Option 2: Postman Collection (Just Created)**
+### **Option 2: Postman Collection**
 
 **Best for:**
 
@@ -32,7 +32,7 @@ Authentication: Bearer Token
 - ✅ **Test automation** - Write automated tests
 - ✅ **Team sharing** - Export/import collections
 
-## 🎯 **What to Share with Frontend Engineer**
+## **What to Share with Frontend Engineer**
 
 ### **Give them BOTH:**
 
