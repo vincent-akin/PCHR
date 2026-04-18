@@ -21,8 +21,10 @@ export const validate = (schema, property = 'body') => {
       throw ApiError.unprocessableEntity('Validation failed', 'VALIDATION_ERROR', errors);
     }
 
-    // Replace request property with validated value
-    req[property] = value;
+    // Store validated data in a custom property to avoid read-only issues
+    req.validated = req.validated || {};
+    req.validated[property] = value;
+    
     next();
   };
 };
